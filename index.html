@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeCity | Secure Reporting</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6366f1; --accent: #a855f7; }
+        
+        body { 
+            margin: 0; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(25px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 32px; 
+            padding: 40px; 
+            width: 90%; 
+            max-width: 400px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+            position: relative;
+            z-index: 10;
+            text-align: center;
+        }
+
+        h2 { font-weight: 800; letter-spacing: -1px; margin: 0 0 10px 0; color: var(--primary); font-size: 2rem; }
+        p { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-bottom: 25px; }
+
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { font-size: 0.7rem; font-weight: 800; color: var(--primary); margin-left: 5px; text-transform: uppercase; }
+
+        input, textarea { 
+            width: 100%; padding: 14px; margin-top: 5px; 
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 14px; color: white; box-sizing: border-box; 
+            font-family: inherit; transition: 0.3s; 
+        }
+
+        input:focus, textarea:focus { border-color: var(--primary); background: rgba(0,0,0,0.5); outline: none; }
+
+        .btn { 
+            width: 100%; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--accent)); 
+            border: none; border-radius: 14px; color: white; font-weight: 800; 
+            cursor: pointer; margin-top: 10px; transition: 0.3s; 
+        }
+
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4); }
+        #statusMsg { font-size: 0.85rem; margin-top: 15px; min-height: 20px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Report Incident</h2>
+        <p>Securely transmit public safety data.</p>
+        
+        <div class="input-group">
+            <label>Subject</label>
+            <input type="text" id="subject" placeholder="What's happening?">
+        </div>
+
+        <div class="input-group">
+            <label>Details</label>
+            <textarea id="details" rows="3" placeholder="Describe the situation..."></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>Location</label>
+            <input type="text" id="location" placeholder="Street, Area, or Landmark">
+        </div>
+
+        <button class="btn" id="sendBtn" onclick="submitReport()">Transmit Report</button>
+        <div id="statusMsg"></div>
+        
+        <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+            <a href="login.html" style="color: rgba(255,255,255,0.3); text-decoration: none; font-size: 0.7rem; letter-spacing: 1px; font-weight: 700;">ADMIN LOGIN →</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBeNe4P0GGmHa51ofEvVWb4IvchDBU28js",
+            authDomain: "safetyroute-95eb7.firebaseapp.com",
+            projectId: "safetyroute-95eb7",
+            storageBucket: "safetyroute-95eb7.firebasestorage.app",
+            messagingSenderId: "724427779375",
+            appId: "1:724427779375:web:2dadf17792c9b4368945da"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.submitReport = async () => {
+            const btn = document.getElementById("sendBtn");
+            const status = document.getElementById("statusMsg");
+            
+            const subj = document.getElementById("subject").value;
+            const det = document.getElementById("details").value;
+            const loc = document.getElementById("location").value;
+
+            if(!subj || !loc) {
+                status.innerHTML = "<span style='color:#ef4444'>❌ Please fill Subject and Location</span>";
+                return;
+            }
+
+            try {
+                btn.innerText = "Transmitting...";
+                btn.disabled = true;
+                
+                await addDoc(collection(db, "incidents"), {
+                    title: subj,
+                    details: det,
+                    location: loc,
+                    status: "Pending",
+                    timestamp: Date.now()
+                });
+
+                status.innerHTML = "<span style='color:#22c55e'>✅ Transmission Successful</span>";
+                document.getElementById("subject").value = "";
+                document.getElementById("details").value = "";
+                document.getElementById("location").value = "";
+            } catch (e) {
+                console.error(e);
+                status.innerHTML = "<span style='color:#ef4444'>❌ Error: " + e.message + "</span>";
+            } finally {
+                btn.innerText = "Transmit Report";
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

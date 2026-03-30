@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeCity | Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #6366f1; --accent: #10b981; --bg: #0b0f1a; }
+        
+        body { 
+            margin: 0; 
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a 80%); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            color: white; 
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        header { 
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 25px 35px;
+            border-radius: 24px;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        h1 { margin: 0; font-weight: 800; letter-spacing: -1px; font-size: 1.8rem; }
+        
+        .incident-card { 
+            background: rgba(255, 255, 255, 0.02); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            padding: 24px; 
+            border-radius: 20px; 
+            margin-bottom: 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .incident-card:hover { 
+            background: rgba(255, 255, 255, 0.05); 
+            border-color: var(--primary); 
+            transform: translateX(8px);
+        }
+
+        .badge { 
+            background: rgba(99, 102, 241, 0.15); 
+            color: #818cf8; 
+            padding: 6px 12px; 
+            border-radius: 50px; 
+            font-size: 0.65rem; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .res-btn { 
+            background: var(--accent); 
+            color: white; border: none; 
+            padding: 12px 24px; 
+            border-radius: 14px; 
+            cursor: pointer; 
+            font-weight: 800; 
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
+            transition: 0.3s;
+        }
+
+        .res-btn:hover { background: #059669; transform: scale(1.05); }
+
+        .logout-btn { 
+            background: transparent; 
+            border: 1px solid #ef4444; 
+            color: #ef4444; 
+            padding: 10px 18px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: 0.3s;
+        }
+
+        .logout-btn:hover { background: #ef4444; color: white; }
+
+        #feed { min-height: 200px; }
+        .loading-txt { opacity: 0.5; text-align: center; margin-top: 50px; font-weight: 600; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Command Center</h1>
+            <p style="color: rgba(255,255,255,0.4); margin: 5px 0 0 0; font-size: 0.9rem;">Live Incident Intelligence</p>
+        </div>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </header>
+
+    <div id="feed">
+        <p class="loading-txt">SYNCHRONIZING WITH DATABASE...</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { 
+        apiKey: "AIzaSyBeNe4P0GGmHa51ofEvVWb4IvchDBU28js", 
+        authDomain: "safetyroute-95eb7.firebaseapp.com", 
+        projectId: "safetyroute-95eb7",
+        storageBucket: "safetyroute-95eb7.firebasestorage.app",
+        messagingSenderId: "724427779375",
+        appId: "1:724427779375:web:2dadf17792c9b4368945da"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // SECURITY CHECK: Must be logged in
+    if (sessionStorage.getItem("admin_active") !== "true") { 
+        window.location.replace("login.html"); 
+    }
+
+    window.loadData = async () => {
+        const feed = document.getElementById("feed");
+        try {
+            const querySnapshot = await getDocs(collection(db, "incidents"));
+            feed.innerHTML = "";
+            
+            if (querySnapshot.empty) { 
+                feed.innerHTML = "<p class='loading-txt'>NO ACTIVE REPORTS DETECTED</p>"; 
+                return; 
+            }
+            
+            querySnapshot.forEach(report => {
+                const d = report.data();
+                const card = document.createElement("div");
+                card.className = "incident-card";
+                card.innerHTML = `
+                    <div>
+                        <span class="badge">Live Report</span>
+                        <h3 style="margin: 0; font-size: 1.2rem;">${d.title || 'Unknown Incident'}</h3>
+                        <p style="margin: 8px 0 0 0; font-size: 0.85rem; color: rgba(255,255,255,0.5);">📍 ${d.location || 'N/A'} — ${d.details || 'No additional details.'}</p>
+                    </div>
+                    <button class="res-btn" onclick="resolve('${report.id}')">Resolve</button>
+                `;
+                feed.appendChild(card);
+            });
+        } catch (e) { 
+            console.error(e);
+            feed.innerHTML = "<p style='color:#ef4444; text-align:center;'>DATABASE ERROR: check firestore rules</p>"; 
+        }
+    }
+
+    window.resolve = async (id) => {
+        if(confirm("Mark incident as resolved?")) {
+            await deleteDoc(doc(db, "incidents", id));
+            window.loadData();
+        }
+    };
+
+    window.logout = () => { 
+        sessionStorage.clear(); 
+        window.location.replace("login.html"); 
+    };
+
+    // Initialize the feed
+    window.loadData();
+</script>
+</body>
+</html>
