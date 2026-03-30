@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SafeCity | Secure Report</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>SafeCity</h1>
+</header>
+
+<main>
+    <div class="card">
+        <h2 style="margin-top:0">Report Incident</h2>
+        <p style="color: rgba(255,255,255,0.6); margin-bottom: 2rem;">Securely transmit safety data.</p>
+
+        <form id="reportForm">
+            <div class="input-group">
+                <input type="text" id="title" placeholder="Incident Title" required>
+            </div>
+            <div class="input-group">
+                <textarea id="description" rows="3" placeholder="Describe the event..." required></textarea>
+            </div>
+            <div class="input-group">
+                <input type="text" id="location" placeholder="Location/Address" required>
+            </div>
+            <div class="input-group">
+                <label style="font-size: 0.8rem; display:block; margin-bottom:5px">Evidence (Optional)</label>
+                <input type="file" id="image">
+            </div>
+            <button type="submit" class="main-btn">Submit Report</button>
+        </form>
+
+        <div class="nav-container">
+            <a href="track.html" class="ghost-btn">Track Existing Report</a>
+        </div>
+    </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
